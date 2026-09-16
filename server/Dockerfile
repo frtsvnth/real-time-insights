@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 COPY package.json ./
 RUN npm install
@@ -6,7 +6,10 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:22-alpine
+# onnxruntime-node (Silero VAD) грузит нативный .so, собранный под glibc — на
+# alpine (musl) это падает с ERR_DLOPEN_FAILED, поэтому тут debian-based slim,
+# а не alpine.
+FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json ./
