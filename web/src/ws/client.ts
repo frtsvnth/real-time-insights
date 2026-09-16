@@ -56,11 +56,18 @@ function getWsOrigin(): string {
   return origin.replace(/^http/, 'ws');
 }
 
+// Если приложение развёрнуто под путём (VITE_BASE_PATH=/realtimeinsights/), BASE_URL
+// это учитывает — иначе WS будет ломиться в корень домена мимо реверс-прокси.
+function getWsPath(sessionId: string): string {
+  const base = import.meta.env.BASE_URL; // "/" локально, "/realtimeinsights/" в проде
+  return `${base}ws/session/${sessionId}`.replace(/\/{2,}/g, '/');
+}
+
 export class SessionSocket {
   private ws: WebSocket | null = null;
 
   connect(sessionId: string, onMessage: (msg: ServerMessage) => void, onOpen?: () => void, onClose?: () => void): void {
-    const ws = new WebSocket(`${getWsOrigin()}/ws/session/${sessionId}`);
+    const ws = new WebSocket(`${getWsOrigin()}${getWsPath(sessionId)}`);
     ws.onopen = () => onOpen?.();
     ws.onclose = () => onClose?.();
     ws.onmessage = (event) => {

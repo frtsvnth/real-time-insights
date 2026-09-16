@@ -1,0 +1,48 @@
+services:
+  server:
+    build:
+      context: ./server
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - root_default
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=root_default
+      - traefik.http.middlewares.realtimeinsights-stripprefix.stripprefix.prefixes=/realtimeinsights
+      - traefik.http.routers.realtimeinsights-api.rule=Host(`sme.pupupu.cloud`) && (PathPrefix(`/realtimeinsights/ws`) || PathPrefix(`/realtimeinsights/api`) || Path(`/realtimeinsights/health`))
+      - traefik.http.routers.realtimeinsights-api.entrypoints=websecure
+      - traefik.http.routers.realtimeinsights-api.tls=true
+      - traefik.http.routers.realtimeinsights-api.tls.certresolver=mytlschallenge
+      - traefik.http.routers.realtimeinsights-api.priority=100
+      - traefik.http.routers.realtimeinsights-api.middlewares=realtimeinsights-stripprefix@docker
+      - traefik.http.services.realtimeinsights-api.loadbalancer.server.port=8000
+
+  web:
+    build:
+      context: ./web
+      args:
+        # StripPrefix на Traefik снимает /realtimeinsights перед тем, как запрос дойдёт
+        # до контейнера, но сам браузер должен знать, что ассеты и WS живут под этим
+        # путём — отсюда base у Vite и /realtimeinsights/ здесь должны совпадать.
+        VITE_BASE_PATH: /realtimeinsights/
+    restart: unless-stopped
+    depends_on:
+      - server
+    networks:
+      - root_default
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=root_default
+      - traefik.http.routers.realtimeinsights-web.rule=Host(`sme.pupupu.cloud`) && PathPrefix(`/realtimeinsights`)
+      - traefik.http.routers.realtimeinsights-web.entrypoints=websecure
+      - traefik.http.routers.realtimeinsights-web.tls=true
+      - traefik.http.routers.realtimeinsights-web.tls.certresolver=mytlschallenge
+      - traefik.http.routers.realtimeinsights-web.priority=50
+      - traefik.http.routers.realtimeinsights-web.middlewares=realtimeinsights-stripprefix@docker
+      - traefik.http.services.realtimeinsights-web.loadbalancer.server.port=8100
+
+networks:
+  root_default:
+    external: true
