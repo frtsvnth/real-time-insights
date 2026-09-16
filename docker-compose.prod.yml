@@ -6,7 +6,7 @@ services:
       - .env
     restart: unless-stopped
     # порты на этом хосте почти все заняты соседними сервисами — доступ только через Traefik
-    ports: []
+    ports: !reset []
     networks:
       - root_default
     labels:
@@ -29,8 +29,11 @@ services:
         # до контейнера, но сам браузер должен знать, что ассеты и WS живут под этим
         # путём — отсюда base у Vite и /realtimeinsights/ здесь должны совпадать.
         VITE_BASE_PATH: /realtimeinsights/
+        # web и server тут на одном origin через Traefik — явно гасим значение из
+        # базового docker-compose.yml (там оно для отдельно стоящих портов 8000/8100).
+        VITE_API_BASE_URL: ""
     restart: unless-stopped
-    ports: []
+    ports: !reset []
     depends_on:
       - server
     networks:
