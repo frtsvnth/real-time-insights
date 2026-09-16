@@ -5,6 +5,8 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    # порты на этом хосте почти все заняты соседними сервисами — доступ только через Traefik
+    ports: []
     networks:
       - root_default
     labels:
@@ -28,6 +30,7 @@ services:
         # путём — отсюда base у Vite и /realtimeinsights/ здесь должны совпадать.
         VITE_BASE_PATH: /realtimeinsights/
     restart: unless-stopped
+    ports: []
     depends_on:
       - server
     networks:
