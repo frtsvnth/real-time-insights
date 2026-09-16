@@ -1,18 +1,14 @@
 // AudioWorklet-процессор: копит Float32-сэмплы и отдаёт их пачками как PCM16 LE.
-// Типы AudioWorklet не входят в стандартный DOM lib, поэтому объявляем минимум сами.
-declare class AudioWorkletProcessor {
-  readonly port: MessagePort;
-  process(inputs: Float32Array[][], outputs: Float32Array[][], parameters: Record<string, Float32Array>): boolean;
-}
-declare function registerProcessor(name: string, ctor: new () => AudioWorkletProcessor): void;
+// Обычный JS, не TS: браузер грузит этот файл напрямую как модуль (AudioWorklet.addModule),
+// а не через сборку основного бандла, так что TS-типы тут только мешали бы MIME/расширению.
 
 // ~150мс при 16kHz — попадает в требуемый диапазон 100-200мс на чанк.
 const CHUNK_SAMPLES = 2400;
 
 class PcmProcessor extends AudioWorkletProcessor {
-  private samples: number[] = [];
+  samples = [];
 
-  process(inputs: Float32Array[][]): boolean {
+  process(inputs) {
     const channelData = inputs[0]?.[0];
     if (channelData) {
       for (let i = 0; i < channelData.length; i++) {

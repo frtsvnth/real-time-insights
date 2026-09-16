@@ -122,8 +122,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       );
       socket.startSession();
       set({ recording: true, paused: false, startedAt: Date.now(), error: null });
-    } catch {
-      set({ error: 'Не удалось получить доступ к микрофону' });
+    } catch (err) {
+      // Разные причины сбоя — разные сообщения. NotAllowedError — это реально отказ
+      // в разрешении; всё остальное (нет устройства, не загрузился AudioWorklet и т.п.)
+      // выглядит для пользователя как "доступ есть, а не работает", поэтому текст должен
+      // отличаться, а не врать про permissions.
+      const name = err instanceof DOMException ? err.name : null;
+      console.error('Не удалось начать запись:', err);
+      const message =
+        name === 'NotAllowedError'
+          ? 'Доступ к микрофону запрещён в браузере'
+          : name === 'NotFoundError'
+            ? 'Микрофон не найден'
+            : `Не удалось начать запись (${name ?? (err instanceof Error ? err.message : 'неизвестная ошибка')})`;
+      set({ error: message });
     }
   },
 

@@ -29,7 +29,7 @@ export async function startMicCapture(
   });
 
   const audioContext = new AudioContext({ sampleRate: 16000 });
-  const workletUrl = new URL('./pcm.worklet.ts', import.meta.url);
+  const workletUrl = new URL('./pcm.worklet.js', import.meta.url);
   await audioContext.audioWorklet.addModule(workletUrl);
 
   const source = audioContext.createMediaStreamSource(stream);
